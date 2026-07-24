@@ -1,0 +1,61 @@
+# ============================================
+# SocketComm Python Module - Multi-Stage Build
+# ============================================
+
+# Stage 1: Builder
+FROM python:3.11-slim AS builder
+
+WORKDIR /build
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install Python dependencies
+COPY python-modules/gui-client/requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# Stage 2: Runtime
+FROM python:3.11-slim AS runtime
+
+LABEL maintainer="SocketComm Team <team@socketcomm.dev>"
+LABEL description="SocketComm Python Chat Client & Server (TCP Sockets)"
+LABEL version="1.0.0"
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tk-dev \
+    libx11-6 \
+    libxext6 \
+    libxrender1 \
+    libxtst6 \
+    fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy installed packages from builder
+COPY --from=builder /install /usr/local
+
+# Create non-root user
+RUN groupadd -r socketcomm && useradd -r -g socketcomm -d /app -s /sbin/nologin socketcomm
+
+WORKDIR /app
+
+# Copy application code
+COPY python-modules/ ./python-modules/
+
+# Set permissions
+RUN chown -R socketcomm:socketcomm /app
+
+USER socketcomm
+
+# Expose chat server port
+EXPOSE 12345/tcp
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import socket; s=socket.socket(); s.settimeout(2); s.connect(('127.0.0.1', 12345)); s.close()" || exit 1
+
+# Default command
+CMD ["python", "python-modules/gui-client/src/server.py"]

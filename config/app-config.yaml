@@ -1,0 +1,144 @@
+# ============================================
+# SocketComm Application Configuration
+# ============================================
+#
+# Main configuration file for all SocketComm services.
+# This file is loaded by all components at startup.
+#
+# Override with environment variables or local config files.
+# ============================================
+
+# Application metadata
+application:
+  name: "SocketComm"
+  version: "1.0.0"
+  description: "Socket-Based Real-Time Communication Platform"
+  environment: "${ENVIRONMENT:development}"  # development | staging | production
+
+# Server configuration
+server:
+  # Python Chat Server
+  chat:
+    host: "${CHAT_HOST:0.0.0.0}"
+    port: ${CHAT_PORT:12345}
+    max_connections: ${MAX_CONNECTIONS:100}
+    buffer_size: 4096
+    timeout: 30  # seconds
+    
+    # Connection settings
+    keepalive:
+      enabled: true
+      interval: 30  # seconds
+      idle_timeout: 300  # seconds (5 minutes)
+    
+    # Security settings
+    tls:
+      enabled: false
+      cert_file: "${TLS_CERT_PATH:}"
+      key_file: "${TLS_KEY_PATH:}"
+
+  # Java File Transfer Server  
+  file_transfer:
+    host: "${FILE_HOST:0.0.0.0}"
+    port: ${FILE_PORT:5000}
+    
+    # Transfer settings
+    buffer_size: ${FILE_BUFFER_SIZE:8192}
+    chunk_size: 65536  # 64KB chunks
+    max_file_size: ${MAX_FILE_SIZE:1073741824}  # 1GB default
+    
+    # Rate limiting (bytes per second)
+    rate_limit: ${RATE_LIMIT:0}  # 0 = unlimited
+
+# Client configuration
+client:
+  chat:
+    server_host: "${SERVER_HOST:127.0.0.1}"
+    server_port: ${SERVER_PORT:12345}
+    auto_reconnect: true
+    reconnect_delay: 2  # initial delay in seconds
+    max_reconnect_attempts: 10
+    message_queue_size: 100
+    
+  file_transfer:
+    server_host: "${FILE_SERVER_HOST:127.0.0.1}"
+    server_port: ${FILE_SERVER_PORT:5000}
+    connect_timeout: 30  # seconds
+    download_path: "${DOWNLOAD_PATH:./downloads}"
+    resume_enabled: true
+
+# Logging configuration
+logging:
+  level: "${LOG_LEVEL:INFO}"  # DEBUG | INFO | WARNING | ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  handlers:
+    console:
+      enabled: true
+      colorize: true
+      
+    file:
+      enabled: true
+      path: "./logs/socketcomm.log"
+      rotation: "10 MB"
+      retention: "7 days"
+
+# UI Configuration (Python GUI)
+ui:
+  theme: dark  # dark | light
+  window:
+    width: 420
+    height: 680
+    min_width: 360
+    min_height: 500
+  
+  colors:
+    primary: "#17212B"
+    secondary: "#0E1621"
+    accent: "#2B5278"
+    text_primary: "#FFFFFF"
+    text_secondary: "#7BA7C7"
+    success: "#51CF66"
+    warning: "#FEE75C"
+    error: "#FF6B6B"
+
+# Security settings
+security:
+  # Authentication (future feature)
+  auth:
+    enabled: false
+    method: token  # token | oauth2 | basic
+    
+  # Encryption
+  encryption:
+    enabled: false
+    algorithm: AES-256-GCM
+    
+  # CORS (for future REST API)
+  cors:
+    allowed_origins: ["*"]
+    allowed_methods: ["GET", "POST", "PUT", "DELETE"]
+    allowed_headers: ["Content-Type", "Authorization"]
+
+# Monitoring & Metrics
+monitoring:
+  enabled: ${MONITORING_ENABLED:false}
+  metrics_port: 9090
+  health_check_interval: 30  # seconds
+  
+  # Prometheus metrics endpoint
+  prometheus:
+    enabled: false
+    endpoint: "/metrics"
+
+# Feature flags
+features:
+  multi_room_chat: false
+  message_history: false
+  file_sharing: true
+  voice_messages: false
+  video_calls: false
+  end_to_end_encryption: false
+  user_presence: false
+  typing_indicators: false
+  read_receipts: false

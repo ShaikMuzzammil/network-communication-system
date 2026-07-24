@@ -1,0 +1,151 @@
+# ============================================
+# SocketComm Platform - Docker Compose Configuration
+# ============================================
+# 
+# This compose file orchestrates all SocketComm services:
+# - Python Socket Chat Server & Client
+# - Java Socket File Transfer Server
+# 
+# Usage:
+#   docker-compose up -d              # Start all services
+#   docker-compose up python-chat     # Start only chat service
+#   docker-compose logs -f            # View logs
+#   docker-compose down               # Stop all services
+#
+# ============================================
+
+version: '3.8'
+
+services:
+  # ==========================================
+  # Python Socket Chat Server
+  # ==========================================
+  python-chat-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.python
+    image: socketcomm/python-chat:latest
+    container_name: socketcomm-chat-server
+    restart: unless-stopped
+    ports:
+      - "${CHAT_PORT:-12345}:12345"
+    environment:
+      - TZ=${TZ:-UTC}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - chat-data:/app/data
+      - chat-logs:/app/logs
+    networks:
+      - socketcomm-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.settimeout(2); s.connect(('127.0.0.1', 12345)); s.close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ==========================================
+  # Java Socket File Transfer Server
+  # ==========================================
+  java-file-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.java
+    image: socketcomm/java-filetransfer:latest
+    container_name: socketcomm-file-server
+    restart: unless-stopped
+    ports:
+      - "${FILE_PORT:-5000}:5000"
+    environment:
+      - TZ=${TZ:-UTC}
+      - MODE=server
+      - JAVA_OPTS=-Xms256m -Xmx512m
+    volumes:
+      - file-storage:/app/files
+      - file-logs:/app/logs
+    networks:
+      - socketcomm-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+          cpus: '1.5'
+        reservations:
+          memory: 384M
+          cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ==========================================
+  # Monitoring (Optional)
+  # ==========================================
+  # monitoring:
+  #   image: prom/prometheus:latest
+  #   container_name: socketcomm-monitoring
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - prometheus-data:/prometheus
+  #     - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml
+  #   networks:
+  #     - socketcomm-network
+  #   profiles:
+  #     - monitoring
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  socketcomm-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# ==========================================
+# Volumes
+# ==========================================
+volumes:
+  chat-data:
+    name: socketcomm-chat-data
+    driver: local
+  chat-logs:
+    name: socketcomm-chat-logs
+    driver: local
+  file-storage:
+    name: socketcomm-file-storage
+    driver: local
+  file-logs:
+    name: socketcomm-file-logs
+    driver: local
+  # prometheus-data:
+
+# ==========================================
+# Environment Variables (.env file)
+# ============================================
+# CHAT_PORT=12345
+# FILE_PORT=5000
+# TZ=UTC
+# LOG_LEVEL=INFO
