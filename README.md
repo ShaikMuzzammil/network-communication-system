@@ -4,7 +4,6 @@
 
 [![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
 [![Java 11+](https://img.shields.io/badge/Java-11%2B-orange.svg)](https://www.oracle.com/java/)
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Version 2.0.0](https://img.shields.io/badge/Version-2.0.0-red.svg)]())
 
 ---
