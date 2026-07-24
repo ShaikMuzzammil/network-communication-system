@@ -8,7 +8,7 @@
 
 ---
 
-## 📖 Description (2 Lines for GitHub)
+## 📖 Description 
 
 **A comprehensive implementation of computer network communication protocols featuring TCP/IP socket programming, secure data transmission with AES-256-GCM encryption, and complete client-server architecture with file transfer capabilities. This production-ready system demonstrates core networking concepts including protocol design (SCMP), real-time messaging, and multi-language support (Python + Java) for academic research, projects, and enterprise applications.**
 
